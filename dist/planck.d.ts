@@ -2232,6 +2232,21 @@ export declare class Serializer<T> {
 }
 /** @ignore */
 declare const math: any;
+declare function sin(x: number): number;
+declare function cos(x: number): number;
+declare function exp(x: number): number;
+declare function atan(x: number): number;
+declare function atan2(y: number, x: number): number;
+declare function sqrt(x: number): number;
+/**
+ * Seed the deterministic PRNG.
+ *
+ * Call before a run and before replaying it. Upstream planck uses
+ * `Math.random`, which cannot be reproduced and so cannot appear anywhere in a
+ * simulation whose replay must be verifiable.
+ */
+export declare function seedRandom(seed: number): void;
+declare function random(): number;
 /** 3D vector */
 export interface Vec3Value {
 	x: number;
@@ -4308,14 +4323,23 @@ export declare class DataDriver<D extends object, R> {
 	ref(d: D): R;
 }
 
+declare namespace DeterministicMath {
+	export { atan, atan2, cos, exp, random, seedRandom, sin, sqrt };
+}
+declare namespace planck$1 {
+	export { DeterministicMath };
+}
+
 export {
 	Body$1 as Body,
 	BoxShape as Box,
 	ChainShape as Chain,
 	CircleShape as Circle,
+	DeterministicMath,
 	EdgeShape as Edge,
 	PolygonShape as Polygon,
 	math as Math,
+	planck$1 as default,
 };
 
 export {};

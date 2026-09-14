@@ -7,8 +7,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-/** @internal */ const math_sin = Math.sin;
-/** @internal */ const math_cos = Math.cos;
+import { sin as math_sin, cos as math_cos } from "./DeterministicMath";
 /** @internal */ const math_sqrt = Math.sqrt;
 
 import { RotValue } from "./Rot";

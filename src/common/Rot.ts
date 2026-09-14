@@ -11,9 +11,7 @@ import { Vec2, Vec2Value } from "./Vec2";
 
 /** @internal */ const _ASSERT = typeof ASSERT === "undefined" ? false : ASSERT;
 /** @internal */ const _CONSTRUCTOR_FACTORY = typeof CONSTRUCTOR_FACTORY === "undefined" ? false : CONSTRUCTOR_FACTORY;
-/** @internal */ const math_sin = Math.sin;
-/** @internal */ const math_cos = Math.cos;
-/** @internal */ const math_atan2 = Math.atan2;
+import { sin as math_sin, cos as math_cos, atan2 as math_atan2 } from "./DeterministicMath";
 
 export interface RotValue {
   /** sin(angle) */

@@ -1,8 +1,8 @@
 {
-  "name": "planck",
-  "version": "1.5.0",
-  "description": "2D JavaScript/TypeScript physics engine for cross-platform HTML5 game development",
-  "homepage": "https://github.com/piqnt/planck.js",
+  "name": "planck-deterministic",
+  "version": "1.5.0-det.1",
+  "description": "planck.js with a cross-platform deterministic math kernel \u2014 bit-identical simulation on ARM64/JavaScriptCore and x86-64/V8, so replays are portable between mobile and desktop builds.",
+  "homepage": "https://github.com/caelum0x/planck-deterministic",
   "keywords": [
     "box2d",
     "html5",
@@ -12,12 +12,17 @@
     "physics",
     "engine",
     "2d",
-    "mobile"
+    "mobile",
+    "deterministic",
+    "replay",
+    "rollback",
+    "lockstep",
+    "cross-platform"
   ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://github.com/piqnt/planck.js.git"
+    "url": "git://github.com/caelum0x/planck-deterministic.git"
   },
   "author": "Ali Shakiba",
   "contributors": [

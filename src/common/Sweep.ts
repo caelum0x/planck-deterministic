@@ -13,7 +13,7 @@ import { Vec2, Vec2Value } from "./Vec2";
 import { TransformValue } from "./Transform";
 
 /** @internal */ const _ASSERT = typeof ASSERT === "undefined" ? false : ASSERT;
-/** @internal */ const math_atan2 = Math.atan2;
+import { atan2 as math_atan2 } from "./DeterministicMath";
 /** @internal */ const math_PI = Math.PI;
 
 /** @internal */ const temp = matrix.vec2(0, 0);

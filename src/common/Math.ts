@@ -7,7 +7,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-/** @internal */ const math_random = Math.random;
+import { random as math_random } from "./DeterministicMath";
 
 export const EPSILON = 1e-9;
 

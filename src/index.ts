@@ -4,6 +4,12 @@ export * from "./util/Testbed";
 /** @hidden @deprecated */
 export { math as Math } from "./common/Math";
 
+// Deterministic math kernel — see src/common/DeterministicMath.ts.
+// Exported so consumers can share the exact same sin/cos/exp/atan2 the
+// solver uses, and seed the PRNG for reproducible replays.
+export * as DeterministicMath from "./common/DeterministicMath";
+export { seedRandom } from "./common/DeterministicMath";
+
 export * from "./common/Vec2";
 export * from "./common/Vec3";
 export * from "./common/Mat22";

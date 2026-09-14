@@ -1,5 +1,5 @@
 /**
- * Planck.js v1.5.0
+ * Planck.js v1.5.0-det.1
  * @license The MIT license
  * @copyright Copyright (c) 2026 Erin Catto, Ali Shakiba
  *
@@ -73,7 +73,227 @@ var options = function(input2, defaults) {
   }
   return output2;
 };
-var math_random$1 = Math.random;
+var PI = 3.141592653589793;
+var TWO_OVER_PI = 0.6366197723675814;
+var PIO2_1 = 1.5707963267341256;
+var PIO2_1T = 6077100506506192e-26;
+var LN2_HI = 0.6931471803691238;
+var LN2_LO = 19082149292705877e-26;
+var INV_LN2 = 1.4426950408889634;
+var HALF_PI = 1.5707963267948966;
+var S1 = -0.16666666666666632;
+var S2 = 0.008333333333332249;
+var S3 = -1984126982985795e-19;
+var S4 = 2755731370707079e-21;
+var S5 = -25050760253406863e-24;
+var S6 = 158969099521155e-24;
+var C1 = 0.04166666666666602;
+var C2 = -0.0013888888888741097;
+var C3 = 2480158728947673e-20;
+var C4 = -27557314351390663e-23;
+var C5 = 2087572321298175e-24;
+var C6 = -11359647557788195e-27;
+var AT0 = 0.3333333333332932;
+var AT1 = -0.19999999999876483;
+var AT2 = 0.14285714272503466;
+var AT3 = -0.11111110405462356;
+var AT4 = 0.09090887133436507;
+var AT5 = -0.07691876205044829;
+var AT6 = 0.06661073137387531;
+var AT7 = -0.05833570133790573;
+var AT8 = 0.04976877994615932;
+var AT9 = -0.036531572744216916;
+var AT10 = 0.016285820115365782;
+var ATAN_HI = [
+  0.4636476090008061,
+  0.7853981633974483,
+  0.982793723247329,
+  1.5707963267948966
+];
+var ATAN_LO = [
+  22698777452961687e-33,
+  3061616997868383e-32,
+  13903311031230998e-33,
+  6123233995736766e-32
+];
+function isFiniteNumber(x2) {
+  return x2 === x2 && x2 !== Infinity && x2 !== -Infinity;
+}
+function roundToInt(x2) {
+  var MAGIC = 4503599627370496;
+  if (x2 >= 0) {
+    if (x2 >= MAGIC)
+      return x2;
+    return x2 + MAGIC - MAGIC;
+  }
+  if (-x2 >= MAGIC)
+    return x2;
+  return x2 - MAGIC + MAGIC;
+}
+function kernelSin(x2) {
+  var z = x2 * x2;
+  var r = S2 + z * (S3 + z * (S4 + z * (S5 + z * S6)));
+  return x2 + x2 * z * (S1 + z * r);
+}
+function kernelCos(x2) {
+  var z = x2 * x2;
+  var r = z * z * (C1 + z * (C2 + z * (C3 + z * (C4 + z * (C5 + z * C6)))));
+  return 1 - 0.5 * z + r;
+}
+function reduceQuadrant(x2) {
+  var n2 = roundToInt(x2 * TWO_OVER_PI);
+  var r = x2 - n2 * PIO2_1 - n2 * PIO2_1T;
+  var q = n2 - roundToInt(n2 / 4) * 4;
+  if (q < 0)
+    q += 4;
+  return { n: q, r };
+}
+function sin$1(x2) {
+  if (!isFiniteNumber(x2))
+    return NaN;
+  var _a2 = reduceQuadrant(x2), n2 = _a2.n, r = _a2.r;
+  switch (n2) {
+    case 0:
+      return kernelSin(r);
+    case 1:
+      return kernelCos(r);
+    case 2:
+      return -kernelSin(r);
+    default:
+      return -kernelCos(r);
+  }
+}
+function cos(x2) {
+  if (!isFiniteNumber(x2))
+    return NaN;
+  var _a2 = reduceQuadrant(x2), n2 = _a2.n, r = _a2.r;
+  switch (n2) {
+    case 0:
+      return kernelCos(r);
+    case 1:
+      return -kernelSin(r);
+    case 2:
+      return -kernelCos(r);
+    default:
+      return kernelSin(r);
+  }
+}
+function twoTo(k) {
+  var result = 1;
+  var factor = k >= 0 ? 2 : 0.5;
+  var count = k >= 0 ? k : -k;
+  for (var i = 0; i < count; i++)
+    result = result * factor;
+  return result;
+}
+function scaleByPowerOfTwo(x2, k) {
+  var result = x2;
+  var n2 = k;
+  while (n2 > 0) {
+    var step = n2 > 500 ? 500 : n2;
+    result = result * twoTo(step);
+    n2 -= step;
+  }
+  while (n2 < 0) {
+    var step = n2 < -500 ? -500 : n2;
+    result = result * twoTo(step);
+    n2 -= step;
+  }
+  return result;
+}
+function exp$1(x2) {
+  if (!isFiniteNumber(x2))
+    return x2 > 0 ? Infinity : NaN;
+  if (x2 > 709.78)
+    return Infinity;
+  if (x2 < -745.2)
+    return 0;
+  var k = roundToInt(x2 * INV_LN2);
+  var hi = x2 - k * LN2_HI;
+  var lo = k * LN2_LO;
+  var r = hi - lo;
+  var term = 1;
+  var sum = 1;
+  for (var i = 1; i <= 15; i++) {
+    term = term * r / i;
+    sum = sum + term;
+  }
+  return scaleByPowerOfTwo(sum, k);
+}
+function atan(x2) {
+  if (!isFiniteNumber(x2)) {
+    if (x2 === Infinity)
+      return HALF_PI;
+    if (x2 === -Infinity)
+      return -HALF_PI;
+    return NaN;
+  }
+  var negative = x2 < 0;
+  var v3 = negative ? -x2 : x2;
+  var id;
+  if (v3 < 0.4375) {
+    id = -1;
+  } else if (v3 < 0.6875) {
+    id = 0;
+    v3 = (2 * v3 - 1) / (2 + v3);
+  } else if (v3 < 1.1875) {
+    id = 1;
+    v3 = (v3 - 1) / (v3 + 1);
+  } else if (v3 < 2.4375) {
+    id = 2;
+    v3 = (v3 - 1.5) / (1 + 1.5 * v3);
+  } else {
+    id = 3;
+    v3 = -1 / v3;
+  }
+  var z = v3 * v3;
+  var w = z * z;
+  var s1 = z * (AT0 + w * (AT2 + w * (AT4 + w * (AT6 + w * (AT8 + w * AT10)))));
+  var s2 = w * (AT1 + w * (AT3 + w * (AT5 + w * (AT7 + w * AT9))));
+  var result;
+  if (id < 0) {
+    result = v3 - v3 * (s1 + s2);
+  } else {
+    var hi = ATAN_HI[id];
+    var lo = ATAN_LO[id];
+    result = hi - (v3 * (s1 + s2) - lo - v3);
+  }
+  return negative ? -result : result;
+}
+function atan2(y, x2) {
+  if (x2 === 0 && y === 0)
+    return 0;
+  if (x2 === 0)
+    return y > 0 ? HALF_PI : -HALF_PI;
+  if (x2 > 0)
+    return atan(y / x2);
+  return y >= 0 ? atan(y / x2) + PI : atan(y / x2) - PI;
+}
+function sqrt(x2) {
+  return Math.sqrt(x2);
+}
+var randomState = 2654435769;
+function seedRandom(seed) {
+  randomState = seed | 0;
+}
+function random$2() {
+  randomState = randomState + 1831565813 | 0;
+  var t = randomState;
+  t = Math.imul(t ^ t >>> 15, t | 1);
+  t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+  return ((t ^ t >>> 14) >>> 0) / 4294967296;
+}
+const DeterministicMath = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  atan,
+  atan2,
+  cos,
+  exp: exp$1,
+  random: random$2,
+  seedRandom,
+  sin: sin$1,
+  sqrt
+}, Symbol.toStringTag, { value: "Module" }));
 var EPSILON = 1e-9;
 var isFinite = Number.isFinite;
 function nextPowerOfTwo(x2) {
@@ -120,7 +340,7 @@ function random$1(min, max) {
     max = min;
     min = 0;
   }
-  return min === max ? min : math_random$1() * (max - min) + min;
+  return min === max ? min : random$2() * (max - min) + min;
 }
 var math$1 = Object.create(Math);
 math$1.EPSILON = EPSILON;
@@ -1617,14 +1837,12 @@ var BroadPhase = (
     return BroadPhase2;
   })()
 );
-var math_sin$2 = Math.sin;
-var math_cos$2 = Math.cos;
 var math_sqrt$7 = Math.sqrt;
 function vec2(x2, y) {
   return { x: x2, y };
 }
 function rotation(angle) {
-  return { s: math_sin$2(angle), c: math_cos$2(angle) };
+  return { s: sin$1(angle), c: cos(angle) };
 }
 function setVec2(out2, x2, y) {
   out2.x = x2;
@@ -1748,8 +1966,8 @@ function distSqrVec2(a2, b2) {
   return dx * dx + dy * dy;
 }
 function setRotAngle(out2, a2) {
-  out2.c = math_cos$2(a2);
-  out2.s = math_sin$2(a2);
+  out2.c = cos(a2);
+  out2.s = sin$1(a2);
   return out2;
 }
 function rotVec2(out2, q, v3) {
@@ -1821,9 +2039,6 @@ function detransformTransform(out2, a2, b2) {
   out2.p.y = y;
   return out2;
 }
-var math_sin$1 = Math.sin;
-var math_cos$1 = Math.cos;
-var math_atan2$3 = Math.atan2;
 var Rot = (
   /** @class */
   (function() {
@@ -1873,8 +2088,8 @@ var Rot = (
         this.s = angle.s;
         this.c = angle.c;
       } else {
-        this.s = math_sin$1(angle);
-        this.c = math_cos$1(angle);
+        this.s = sin$1(angle);
+        this.c = cos(angle);
       }
     };
     Rot2.prototype.setRot = function(angle) {
@@ -1882,11 +2097,11 @@ var Rot = (
       this.c = angle.c;
     };
     Rot2.prototype.setAngle = function(angle) {
-      this.s = math_sin$1(angle);
-      this.c = math_cos$1(angle);
+      this.s = sin$1(angle);
+      this.c = cos(angle);
     };
     Rot2.prototype.getAngle = function() {
-      return math_atan2$3(this.s, this.c);
+      return atan2(this.s, this.c);
     };
     Rot2.prototype.getXAxis = function() {
       return Vec2.neo(this.c, this.s);
@@ -1940,7 +2155,6 @@ var Rot = (
     return Rot2;
   })()
 );
-var math_atan2$2 = Math.atan2;
 var math_PI$7 = Math.PI;
 var temp$7 = vec2(0, 0);
 var Sweep = (
@@ -1966,7 +2180,7 @@ var Sweep = (
       transformVec2(temp$7, xf2, this.localCenter);
       copyVec2(this.c, temp$7);
       copyVec2(this.c0, temp$7);
-      this.a = this.a0 = math_atan2$2(xf2.q.s, xf2.q.c);
+      this.a = this.a0 = atan2(xf2.q.s, xf2.q.c);
     };
     Sweep2.prototype.setLocalCenter = function(localCenter2, xf2) {
       copyVec2(this.localCenter, localCenter2);
@@ -2140,8 +2354,6 @@ var Velocity = (
     return Velocity2;
   })()
 );
-var math_sin = Math.sin;
-var math_cos = Math.cos;
 var Position = (
   /** @class */
   (function() {
@@ -2150,8 +2362,8 @@ var Position = (
       this.a = 0;
     }
     Position2.prototype.getTransform = function(xf2, p) {
-      xf2.q.c = math_cos(this.a);
-      xf2.q.s = math_sin(this.a);
+      xf2.q.c = cos(this.a);
+      xf2.q.s = sin$1(this.a);
       xf2.p.x = this.c.x - (xf2.q.c * p.x - xf2.q.s * p.y);
       xf2.p.y = this.c.y - (xf2.q.s * p.x + xf2.q.c * p.y);
       return xf2;
@@ -2160,8 +2372,8 @@ var Position = (
   })()
 );
 function getTransform(xf2, p, c2, a2) {
-  xf2.q.c = math_cos(a2);
-  xf2.q.s = math_sin(a2);
+  xf2.q.c = cos(a2);
+  xf2.q.s = sin$1(a2);
   xf2.p.x = c2.x - (xf2.q.c * p.x - xf2.q.s * p.y);
   xf2.p.y = c2.y - (xf2.q.s * p.x + xf2.q.c * p.y);
   return xf2;
@@ -8792,27 +9004,27 @@ var PrismaticJoint = (
       var s1 = Vec2.crossVec2Vec2(Vec2.add(d2, rA2), perp2);
       var s2 = Vec2.crossVec2Vec2(rB2, perp2);
       var impulse = new Vec3();
-      var C1 = Vec2.zero();
-      C1.x = Vec2.dot(perp2, d2);
-      C1.y = aB - aA - this.m_referenceAngle;
-      var linearError = math_abs$4(C1.x);
-      var angularError = math_abs$4(C1.y);
+      var C12 = Vec2.zero();
+      C12.x = Vec2.dot(perp2, d2);
+      C12.y = aB - aA - this.m_referenceAngle;
+      var linearError = math_abs$4(C12.x);
+      var angularError = math_abs$4(C12.y);
       var linearSlop = SettingsInternal.linearSlop;
       var maxLinearCorrection = SettingsInternal.maxLinearCorrection;
       var active = false;
-      var C2 = 0;
+      var C22 = 0;
       if (this.m_enableLimit) {
         var translation2 = Vec2.dot(axis, d2);
         if (math_abs$4(this.m_upperTranslation - this.m_lowerTranslation) < 2 * linearSlop) {
-          C2 = clamp$1(translation2, -maxLinearCorrection, maxLinearCorrection);
+          C22 = clamp$1(translation2, -maxLinearCorrection, maxLinearCorrection);
           linearError = math_max$3(linearError, math_abs$4(translation2));
           active = true;
         } else if (translation2 <= this.m_lowerTranslation) {
-          C2 = clamp$1(translation2 - this.m_lowerTranslation + linearSlop, -maxLinearCorrection, 0);
+          C22 = clamp$1(translation2 - this.m_lowerTranslation + linearSlop, -maxLinearCorrection, 0);
           linearError = Math.max(linearError, this.m_lowerTranslation - translation2);
           active = true;
         } else if (translation2 >= this.m_upperTranslation) {
-          C2 = clamp$1(translation2 - this.m_upperTranslation - linearSlop, 0, maxLinearCorrection);
+          C22 = clamp$1(translation2 - this.m_upperTranslation - linearSlop, 0, maxLinearCorrection);
           linearError = Math.max(linearError, translation2 - this.m_upperTranslation);
           active = true;
         }
@@ -8832,9 +9044,9 @@ var PrismaticJoint = (
         K.ey.set(k12, k22, k23);
         K.ez.set(k13, k23, k33);
         var C = new Vec3();
-        C.x = C1.x;
-        C.y = C1.y;
-        C.z = C2;
+        C.x = C12.x;
+        C.y = C12.y;
+        C.z = C22;
         impulse = K.solve33(Vec3.neg(C));
       } else {
         var k11 = mA + mB + iA * s1 * s1 + iB * s2 * s2;
@@ -8846,7 +9058,7 @@ var PrismaticJoint = (
         var K = new Mat22();
         K.ex.setNum(k11, k12);
         K.ey.setNum(k12, k22);
-        var impulse1 = K.solve(Vec2.neg(C1));
+        var impulse1 = K.solve(Vec2.neg(C12));
         impulse.x = impulse1.x;
         impulse.y = impulse1.y;
         impulse.z = 0;
@@ -10280,29 +10492,29 @@ var WeldJoint = (
       K.ey.z = K.ez.y;
       K.ez.z = iA + iB;
       if (this.m_frequencyHz > 0) {
-        var C1 = Vec2.zero();
-        C1.addCombine(1, cB2, 1, rB2);
-        C1.subCombine(1, cA2, 1, rA2);
-        positionError = C1.length();
+        var C12 = Vec2.zero();
+        C12.addCombine(1, cB2, 1, rB2);
+        C12.subCombine(1, cA2, 1, rA2);
+        positionError = C12.length();
         angularError = 0;
-        var P3 = Vec2.neg(K.solve22(C1));
+        var P3 = Vec2.neg(K.solve22(C12));
         cA2.subMul(mA, P3);
         aA -= iA * Vec2.crossVec2Vec2(rA2, P3);
         cB2.addMul(mB, P3);
         aB += iB * Vec2.crossVec2Vec2(rB2, P3);
       } else {
-        var C1 = Vec2.zero();
-        C1.addCombine(1, cB2, 1, rB2);
-        C1.subCombine(1, cA2, 1, rA2);
-        var C2 = aB - aA - this.m_referenceAngle;
-        positionError = C1.length();
-        angularError = math_abs$2(C2);
-        var C = new Vec3(C1.x, C1.y, C2);
+        var C12 = Vec2.zero();
+        C12.addCombine(1, cB2, 1, rB2);
+        C12.subCombine(1, cA2, 1, rA2);
+        var C22 = aB - aA - this.m_referenceAngle;
+        positionError = C12.length();
+        angularError = math_abs$2(C22);
+        var C = new Vec3(C12.x, C12.y, C22);
         var impulse = new Vec3();
         if (K.ez.z > 0) {
           impulse = Vec3.neg(K.solve33(C));
         } else {
-          var impulse2 = Vec2.neg(K.solve22(C1));
+          var impulse2 = Vec2.neg(K.solve22(C12));
           impulse.set(impulse2.x, impulse2.y, 0);
         }
         var P3 = Vec2.neo(impulse.x, impulse.y);
@@ -16579,6 +16791,7 @@ const planck = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   ContactID,
   ContactImpulse,
   DataDriver,
+  DeterministicMath,
   Distance,
   DistanceInput,
   DistanceJoint,
@@ -16646,6 +16859,7 @@ const planck = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   internal,
   mixFriction,
   mixRestitution,
+  seedRandom,
   stats: stats$1,
   testOverlap,
   testbed
@@ -16672,6 +16886,7 @@ export {
   ContactID,
   ContactImpulse,
   DataDriver,
+  DeterministicMath,
   Distance,
   DistanceInput,
   DistanceJoint,
@@ -16734,6 +16949,7 @@ export {
   internal,
   mixFriction,
   mixRestitution,
+  seedRandom,
   stats$1 as stats,
   testOverlap,
   testbed

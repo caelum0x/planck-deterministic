@@ -10,8 +10,7 @@
 import { Vec2, Vec2Value } from "../common/Vec2";
 import { TransformValue } from "../common/Transform";
 
-/** @internal */ const math_sin = Math.sin;
-/** @internal */ const math_cos = Math.cos;
+import { sin as math_sin, cos as math_cos } from "../common/DeterministicMath";
 
 export class Position {
   /** location */
