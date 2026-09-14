@@ -269,6 +269,35 @@ function atan2(y, x2) {
     return atan(y / x2);
   return y >= 0 ? atan(y / x2) + PI : atan(y / x2) - PI;
 }
+function log(x2) {
+  if (x2 !== x2)
+    return NaN;
+  if (x2 < 0)
+    return NaN;
+  if (x2 === 0)
+    return -Infinity;
+  if (x2 === Infinity)
+    return Infinity;
+  var k = 0;
+  var m = x2;
+  while (m >= 1.3333333333333333) {
+    m = m * 0.5;
+    k += 1;
+  }
+  while (m < 0.6666666666666666) {
+    m = m * 2;
+    k -= 1;
+  }
+  var s2 = (m - 1) / (m + 1);
+  var s22 = s2 * s2;
+  var term = s2;
+  var sum = s2;
+  for (var i = 3; i <= 25; i += 2) {
+    term = term * s22;
+    sum = sum + term / i;
+  }
+  return k * LN2_HI + k * LN2_LO + 2 * sum;
+}
 function sqrt(x2) {
   return Math.sqrt(x2);
 }
@@ -289,6 +318,7 @@ const DeterministicMath = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.d
   atan2,
   cos,
   exp: exp$1,
+  log,
   random: random$2,
   seedRandom,
   sin: sin$1,

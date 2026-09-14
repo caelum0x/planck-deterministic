@@ -58,6 +58,26 @@ describe("deterministic math kernel", () => {
     expect(ours).not.toBe(host); // but independently computed
   });
 
+  it("computes natural logs accurately", () => {
+    for (let i = 1; i <= 400; i++) {
+      const x = i * 0.37;
+      expect(Math.abs(DM.log(x) - Math.log(x))).toBeLessThan(1e-13);
+    }
+    for (const x of [1e-8, 1e-3, 0.5, 1, 2, Math.E, 1e6, 1e12]) {
+      expect(Math.abs(DM.log(x) - Math.log(x))).toBeLessThan(1e-12);
+    }
+    expect(DM.log(1)).toBe(0);
+    expect(DM.log(0)).toBe(-Infinity);
+    expect(Number.isNaN(DM.log(-1))).toBe(true);
+  });
+
+  it("log and exp invert each other", () => {
+    for (let i = 1; i <= 100; i++) {
+      const x = i * 0.13;
+      expect(Math.abs(DM.log(DM.exp(x)) - x)).toBeLessThan(1e-12);
+    }
+  });
+
   it("seeds a reproducible PRNG", () => {
     DM.seedRandom(99);
     const first = [DM.random(), DM.random(), DM.random()];

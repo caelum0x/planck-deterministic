@@ -265,6 +265,48 @@ export function atan2(y: number, x: number): number {
 }
 
 /**
+ * Natural logarithm, cross-platform deterministic.
+ *
+ * Reduce x = m * 2^k with m in [2/3, 4/3), so ln(x) = k*ln2 + ln(m). Then
+ * ln(m) = 2*atanh(s) with s = (m-1)/(m+1), |s| <= 0.2, whose odd series
+ * converges fast enough that 12 terms are well past the rounding floor.
+ *
+ * Needed because the rocket equation (Tsiolkovsky) produces figures that ship
+ * inside level data — a par-fuel number that differs between platforms is the
+ * same class of bug as a desynced replay.
+ */
+export function log(x: number): number {
+  if (x !== x) return NaN;
+  if (x < 0) return NaN;
+  if (x === 0) return -Infinity;
+  if (x === Infinity) return Infinity;
+
+  // Exact binary exponent extraction by repeated halving/doubling. Powers of
+  // two multiply exactly in IEEE-754, so no rounding enters here.
+  let k = 0;
+  let m = x;
+  while (m >= 1.3333333333333333) {
+    m = m * 0.5;
+    k += 1;
+  }
+  while (m < 0.6666666666666666) {
+    m = m * 2;
+    k -= 1;
+  }
+
+  const s = (m - 1) / (m + 1);
+  const s2 = s * s;
+  let term = s;
+  let sum = s;
+  for (let i = 3; i <= 25; i += 2) {
+    term = term * s2;
+    sum = sum + term / i;
+  }
+
+  return k * LN2_HI + k * LN2_LO + 2 * sum;
+}
+
+/**
  * Square root.
  *
  * The one host call retained. IEEE-754 §5.4.1 requires `sqrt` to be correctly
